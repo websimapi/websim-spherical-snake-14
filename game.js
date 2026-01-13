@@ -72,7 +72,9 @@ export class Game {
 
         const tryLoad = (urlList, index = 0) => {
             if (index >= urlList.length) {
-                // No image could be loaded; leave card hidden
+                // No image could be loaded; ensure we still hide the loader and show the game
+                document.body.classList.add('ready');
+                hideLoader();
                 return;
             }
 
@@ -109,11 +111,11 @@ export class Game {
         this.createEarth();
 
         // removed Snake Head creation - moved to Snake class
-        this.snake = new Snake(this.scene, this.EARTH_RADIUS);
+        this.snake = new Snake(this.scene, this.earthRadius);
 
         // removed Food creation/spawning - moved to FoodManager
-        this.foodManager = new FoodManager(this.scene, this.EARTH_RADIUS);
-        this.foodManager.spawnFood(this.snake.head.position, this.snake.segments);
+        this.foodManager = new FoodManager(this.scene, this.earthRadius);
+        this.foodManager.spawnFood(this.snake.head.position, this.snake.segments, 0, this.earthRadius);
 
         this.resetGame();
     }
@@ -218,7 +220,7 @@ export class Game {
         // removed reset logic for segments/bonus foods - delegated to managers
         this.snake.reset();
         this.foodManager.reset();
-        this.foodManager.spawnFood(this.snake.head.position, this.snake.segments);
+        this.foodManager.spawnFood(this.snake.head.position, this.snake.segments, 0, this.earthRadius);
         
         this.recorder.reset();
 
@@ -340,7 +342,7 @@ export class Game {
             const scoreEl = document.getElementById('player-score');
             if(scoreEl) scoreEl.innerText = this.score;
             
-            this.foodManager.spawnFood(this.snake.head.position, this.snake.segments);
+            this.foodManager.spawnFood(this.snake.head.position, this.snake.segments, 0, this.earthRadius);
             
             if (Math.random() < 0.5) {
                 this.foodManager.spawnBonusTrail(5);

@@ -54,7 +54,13 @@ room.initialize().then(() => {
     const me = room.peers[room.clientId];
     if(me) {
         game.setPlayerInfo(me);
+    } else {
+        document.body.classList.add('ready');
+        hideLoader();
     }
+}).catch(() => {
+    document.body.classList.add('ready');
+    hideLoader();
 });
 
 // Raycaster for interaction
