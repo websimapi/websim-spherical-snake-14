@@ -305,9 +305,9 @@ export class Game {
         if (this.earth) this.earth.scale.setScalar(this.earthRadius / this.INITIAL_RADIUS);
         if (this.atm) this.atm.scale.setScalar(this.earthRadius / this.INITIAL_RADIUS);
 
-        // Prepare ripple function for entities to use
-        const rippleFn = (pos) => {
-            return getRippleHeight(
+        // Combined height function: Ripples + Terrain
+        const heightFn = (pos) => {
+            const rh = getRippleHeight(
                 pos,
                 this.time,
                 this.rippleUniforms.uRippleCenters.value,
@@ -315,18 +315,20 @@ export class Game {
                 this.rippleUniforms.uRippleIntensities.value,
                 this.earthRadius
             );
+            const th = this.islandManager.getTerrainHeight(pos, this.earthRadius);
+            return rh + th;
         };
 
         // 1. Update Snake
         // removed movement logic block - delegated to Snake.update
-        const moveDist = this.snake.update(dt, this.targetPoint, rippleFn, this.earthRadius);
+        const moveDist = this.snake.update(dt, this.targetPoint, heightFn, this.earthRadius);
         if (moveDist > 0 && this.targetPoint && this.snake.head.position.distanceTo(this.targetPoint) < 1.0) {
             this.targetPoint = null;
         }
 
         // 2. Update Food Manager (Pulse anims, Bonus spawning)
         // removed bonus spawn logic - delegated to FoodManager
-        this.foodManager.update(moveDist, this.snake.getTailPosition(), rippleFn, this.earthRadius);
+        this.foodManager.update(moveDist, this.snake.getTailPosition(), heightFn, this.earthRadius);
 
         // 3. Collision Checks
         // We need to pass the "logic" position (surface level) or handle it inside
@@ -417,6 +419,7 @@ export class Game {
                 color: seg.material.color.getHex()
             })),
             score: this.score,
+            islands: this.islandManager.getSnapshot(),
             tongue: {
                 scaleX: this.snake.tongue ? this.snake.tongue.scale.x : 1,
                 scaleZ: this.snake.tongue ? this.snake.tongue.scale.z : 0.01

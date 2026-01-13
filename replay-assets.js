@@ -158,19 +158,39 @@ export const createSegment = (colorHex) => {
 };
 
 export const createIsland = (radius, height) => {
-    // Recreate same geometry parameters
-    const geo = new THREE.ConeGeometry(radius, height, 7, 1);
+    // Recreate same geometry parameters as island-manager.js
+    const radialSegments = 12;
+    const heightSegments = 3;
+    const geo = new THREE.CylinderGeometry(radius * 0.7, radius, height, radialSegments, heightSegments);
+    
+    // Add same pseudo-random coloring logic
+    const posAttr = geo.attributes.position;
+    const colors = [];
+    const color = new THREE.Color();
+    for (let i = 0; i < posAttr.count; i++) {
+        const y = posAttr.getY(i);
+        const heightFactor = (y + height/2) / height;
+        if (heightFactor < 0.3) {
+            color.setHex(0xd2b48c); // Tan/Sand
+        } else if (heightFactor < 0.5) {
+            color.setHex(0xc2b280); 
+        } else {
+            color.setHex(0x2e8b57); 
+        }
+        colors.push(color.r, color.g, color.b);
+    }
+    geo.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
     geo.translate(0, height/2, 0); 
     
     const mat = new THREE.MeshStandardMaterial({
-        color: 0x2e8b57,
-        roughness: 0.8,
+        vertexColors: true,
+        roughness: 0.9,
         flatShading: true,
-        emissive: 0x0a2211,
-        emissiveIntensity: 0.2
+        emissive: 0x111111,
+        emissiveIntensity: 0.1
     });
     const mesh = new THREE.Mesh(geo, mat);
-    // Align axis same as in manager
+    // Base rotation is applied by the island manager state, but we need the correct internal orientation
     mesh.rotateX(-Math.PI / 2);
     return mesh;
 };

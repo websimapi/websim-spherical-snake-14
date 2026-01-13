@@ -100,6 +100,7 @@ const ReplayScene = ({ data, isMuted }) => {
       food,
       bonusFoods: [],
       segments: [],
+      islands: /* @__PURE__ */ new Map(),
       cameraRig
     };
     return () => {
@@ -169,6 +170,27 @@ const ReplayScene = ({ data, isMuted }) => {
         objs.bonusFoods[i].position.fromArray(pos);
       }
     });
+    const islandData = frameData.islands || [];
+    const currentIslandIds = new Set(islandData.map((i) => i.id));
+    for (const [id, mesh] of objs.islands.entries()) {
+      if (!currentIslandIds.has(id)) {
+        sceneRef.current.remove(mesh);
+        if (mesh.geometry) mesh.geometry.dispose();
+        if (mesh.material) mesh.material.dispose();
+        objs.islands.delete(id);
+      }
+    }
+    islandData.forEach((iData) => {
+      let mesh = objs.islands.get(iData.id);
+      if (!mesh) {
+        mesh = createIsland(iData.radius, iData.height);
+        sceneRef.current.add(mesh);
+        objs.islands.set(iData.id, mesh);
+      }
+      mesh.position.fromArray(iData.pos);
+      mesh.quaternion.fromArray(iData.quat);
+      mesh.scale.fromArray(iData.scale);
+    });
     while (objs.segments.length < frameData.segments.length) {
       const colorHex = frameData.segments[objs.segments.length].color;
       const segment = createSegment(colorHex);
@@ -207,7 +229,7 @@ const ReplayScene = ({ data, isMuted }) => {
   return /* @__PURE__ */ jsxDEV(AbsoluteFill, { children: [
     /* @__PURE__ */ jsxDEV("div", { ref: containerRef, style: { width: "100%", height: "100%" } }, void 0, false, {
       fileName: "<stdin>",
-      lineNumber: 282,
+      lineNumber: 310,
       columnNumber: 13
     }),
     /* @__PURE__ */ jsxDEV("div", { style: {
@@ -248,7 +270,7 @@ const ReplayScene = ({ data, isMuted }) => {
           false,
           {
             fileName: "<stdin>",
-            lineNumber: 301,
+            lineNumber: 329,
             columnNumber: 21
           }
         ),
@@ -266,12 +288,12 @@ const ReplayScene = ({ data, isMuted }) => {
           whiteSpace: "nowrap"
         }, children: playerInfo.username }, void 0, false, {
           fileName: "<stdin>",
-          lineNumber: 317,
+          lineNumber: 345,
           columnNumber: 21
         })
       ] }, void 0, true, {
         fileName: "<stdin>",
-        lineNumber: 295,
+        lineNumber: 323,
         columnNumber: 17
       }),
       /* @__PURE__ */ jsxDEV("div", { style: {
@@ -283,12 +305,12 @@ const ReplayScene = ({ data, isMuted }) => {
         marginTop: "10px"
       }, children: score }, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 333,
+        lineNumber: 361,
         columnNumber: 17
       })
     ] }, void 0, true, {
       fileName: "<stdin>",
-      lineNumber: 285,
+      lineNumber: 313,
       columnNumber: 13
     }),
     activeCues.map((cue) => {
@@ -296,17 +318,17 @@ const ReplayScene = ({ data, isMuted }) => {
       const finalVolume = isMuted ? 0 : 0.5 * (cue.volume ?? 1);
       return /* @__PURE__ */ jsxDEV(Sequence, { from: cue.frame, durationInFrames: duration, children: /* @__PURE__ */ jsxDEV(Audio, { src: cue.src, volume: finalVolume }, void 0, false, {
         fileName: "<stdin>",
-        lineNumber: 351,
+        lineNumber: 379,
         columnNumber: 25
       }) }, cue.id, false, {
         fileName: "<stdin>",
-        lineNumber: 350,
+        lineNumber: 378,
         columnNumber: 21
       });
     })
   ] }, void 0, true, {
     fileName: "<stdin>",
-    lineNumber: 281,
+    lineNumber: 309,
     columnNumber: 9
   });
 };
