@@ -84,7 +84,9 @@ export class FoodManager {
         this.bonusFoods.push(mesh);
     }
 
-    update(moveDist, snakeTailPos, rippleFn) {
+    update(moveDist, snakeTailPos, rippleFn, currentRadius) {
+        if (currentRadius) this.EARTH_RADIUS = currentRadius;
+
         // Apply Ripple Physics to Food
         if (rippleFn) {
             this.applyRippleToFood(this.food, rippleFn);

@@ -188,10 +188,12 @@ export class Snake {
                this.head.position.clone();
     }
 
-    update(dt, targetPoint, heightFn, currentRadius) {
+    update(dt, targetPoint, rippleFn, currentRadius) {
+        if (currentRadius) this.EARTH_RADIUS = currentRadius;
+        
         // 0. Reset head to surface (Physics Step)
         // Physics happens on the ideal sphere
-        this.head.position.setLength(currentRadius);
+        this.head.position.setLength(this.EARTH_RADIUS);
 
         // 1. Parallel Transport Movement Logic
         const headPos = this.head.position.clone();

@@ -119,7 +119,7 @@ export class Game {
     }
     
     createEarth() {
-        const geometry = new THREE.SphereGeometry(this.EARTH_RADIUS, 64, 64);
+        const geometry = new THREE.SphereGeometry(this.earthRadius, 64, 64);
         const material = new THREE.MeshStandardMaterial({
             color: 0x88ccff,
             emissive: 0x002244, 
@@ -210,7 +210,8 @@ export class Game {
             opacity: 0.1,
             side: THREE.BackSide
         });
-        this.scene.add(new THREE.Mesh(atmGeometry, atmMaterial));
+        this.atm = new THREE.Mesh(atmGeometry, atmMaterial);
+        this.scene.add(this.atm);
     }
     
     resetGame() {
@@ -251,7 +252,7 @@ export class Game {
     setTarget(point) {
         if(this.isGameOver) return;
         this.audioManager.resume();
-        this.targetPoint = point.clone().normalize().multiplyScalar(this.EARTH_RADIUS);
+        this.targetPoint = point.clone().normalize().multiplyScalar(this.earthRadius);
     }
 
     triggerRipple(point, durationMs) {
@@ -285,6 +286,23 @@ export class Game {
 
         if(this.isGameOver) return;
 
+        // Island Logic
+        this.islandManager.update(dt, this.earthRadius);
+        
+        // Spawn Islands based on score
+        if (this.score >= this.nextIslandScore) {
+            this.islandManager.spawnIsland(this.earthRadius);
+            this.nextIslandScore += 50;
+        }
+
+        // Dynamic Earth Growth
+        // Target radius grows with islands
+        const targetRadius = this.INITIAL_RADIUS + (this.islandManager.islands.length * 0.4);
+        this.earthRadius = THREE.MathUtils.lerp(this.earthRadius, targetRadius, dt * 0.5);
+        
+        if (this.earth) this.earth.scale.setScalar(this.earthRadius / this.INITIAL_RADIUS);
+        if (this.atm) this.atm.scale.setScalar(this.earthRadius / this.INITIAL_RADIUS);
+
         // Prepare ripple function for entities to use
         const rippleFn = (pos) => {
             return getRippleHeight(
@@ -293,20 +311,20 @@ export class Game {
                 this.rippleUniforms.uRippleCenters.value,
                 this.rippleUniforms.uRippleStartTimes.value,
                 this.rippleUniforms.uRippleIntensities.value,
-                this.EARTH_RADIUS
+                this.earthRadius
             );
         };
 
         // 1. Update Snake
         // removed movement logic block - delegated to Snake.update
-        const moveDist = this.snake.update(dt, this.targetPoint, rippleFn);
+        const moveDist = this.snake.update(dt, this.targetPoint, rippleFn, this.earthRadius);
         if (moveDist > 0 && this.targetPoint && this.snake.head.position.distanceTo(this.targetPoint) < 1.0) {
             this.targetPoint = null;
         }
 
         // 2. Update Food Manager (Pulse anims, Bonus spawning)
         // removed bonus spawn logic - delegated to FoodManager
-        this.foodManager.update(moveDist, this.snake.getTailPosition(), rippleFn);
+        this.foodManager.update(moveDist, this.snake.getTailPosition(), rippleFn, this.earthRadius);
 
         // 3. Collision Checks
         // We need to pass the "logic" position (surface level) or handle it inside
@@ -407,7 +425,7 @@ export class Game {
 
     getReplayJSON() {
         return this.recorder.getReplayJSON({
-            earthRadius: this.EARTH_RADIUS,
+            earthRadius: this.earthRadius,
             fps: this.recorder.RECORD_FPS,
             playerInfo: this.playerInfo,
             sounds: {
